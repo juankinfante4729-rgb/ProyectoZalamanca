@@ -98,7 +98,7 @@ const App = () => {
   const [houses, setHouses] = useState([]);
   const [loading, setLoading] = useState(isConfigValid);
   const [activeTab, setActiveTab] = useState('control');
-  const [toast, setToast] = useState({ show: false, message: '' });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // --- FILTROS AVANZADOS ---
@@ -146,7 +146,7 @@ const App = () => {
 
   useEffect(() => {
     if (toast.show) {
-      const timer = setTimeout(() => setToast({ show: false, message: '' }), 3000);
+      const timer = setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
       return () => clearTimeout(timer);
     }
   }, [toast.show]);
@@ -203,12 +203,24 @@ const App = () => {
     try {
       const houseRef = doc(db, 'artifacts', appId, 'public', 'data', 'houses', formHouse.id);
       await setDoc(houseRef, { ...formHouse, updatedAt: Date.now() }, { merge: true });
-      setToast({ show: true, message: `Casa #${formHouse.numero} actualizada.` });
+      
+      // Mensaje de éxito mejorado
+      setToast({ 
+        show: true, 
+        message: `¡Éxito! Casa #${formHouse.numero} guardada.`, 
+        type: 'success' 
+      });
+      
       setFormHouse({ id: '', numero: '', etapa: 1, doc_fachada: 'Pendiente', doc_predial: 'Pendiente', doc_gravamen: 'Pendiente' });
       setHouseSearchQuery('');
       if (window.innerWidth < 1024) setIsSidebarOpen(false);
     } catch (err) { 
-      setToast({ show: true, message: 'Error al actualizar.' });
+      // Mensaje de error
+      setToast({ 
+        show: true, 
+        message: 'Error: No se pudieron guardar los cambios.', 
+        type: 'error' 
+      });
     }
   };
 
@@ -403,13 +415,12 @@ const App = () => {
                   onClick={() => setActiveTab(tab)} 
                   className={`h-16 px-1 text-[9px] sm:text-[10px] md:text-[11px] font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === tab ? 'text-[#4F67EE] border-[#4F67EE]' : 'text-slate-300 border-transparent hover:text-slate-600'}`}
                 >
-                  {tab === 'control' ? (window.innerWidth < 640 ? 'Reg.' : 'Registro') : (window.innerWidth < 640 ? 'Dash.' : 'Análisis')}
+                  {tab === 'control' ? (window.innerWidth < 640 ? 'Reg.' : 'Registro') : (window.innerWidth < 640 ? 'Anál.' : 'Análisis')}
                 </button>
               ))}
             </div>
           </div>
           
-          {/* MEJORA: Búsqueda siempre visible en móvil con ancho adaptativo */}
           <div className="relative flex items-center">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={13} />
             <input 
@@ -423,6 +434,16 @@ const App = () => {
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#F8FAFC]">
+          {/* TOAST DE CONFIRMACIÓN O ERROR */}
+          {toast.show && (
+            <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] ${toast.type === 'error' ? 'bg-rose-600' : 'bg-slate-800'} text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 w-[90%] max-w-xs`}>
+              <div className={`${toast.type === 'error' ? 'bg-white/20' : 'bg-emerald-500'} rounded-full p-1 shrink-0`}>
+                {toast.type === 'error' ? <AlertCircle size={14} className="text-white" /> : <Check size={14} className="text-white" />}
+              </div>
+              <span className="text-sm font-medium truncate">{toast.message}</span>
+            </div>
+          )}
+
           {activeTab === 'control' ? (
             <div className="space-y-3 max-w-6xl mx-auto">
               <div className="flex justify-between items-center px-2">
