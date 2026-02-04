@@ -403,7 +403,7 @@ const App = () => {
                   onClick={() => setActiveTab(tab)} 
                   className={`h-16 px-1 text-[9px] sm:text-[10px] md:text-[11px] font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === tab ? 'text-[#4F67EE] border-[#4F67EE]' : 'text-slate-300 border-transparent hover:text-slate-600'}`}
                 >
-                  {tab === 'control' ? (window.innerWidth < 640 ? 'Reg.' : 'Registro') : (window.innerWidth < 640 ? 'Anál.' : 'Análisis')}
+                  {tab === 'control' ? (window.innerWidth < 640 ? 'Reg.' : 'Registro') : (window.innerWidth < 640 ? 'Dash.' : 'Análisis')}
                 </button>
               ))}
             </div>
