@@ -98,7 +98,6 @@ const App = () => {
   const [houses, setHouses] = useState([]);
   const [loading, setLoading] = useState(isConfigValid);
   const [activeTab, setActiveTab] = useState('control');
-  const [errorMessage, setErrorMessage] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '' });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
@@ -115,7 +114,7 @@ const App = () => {
 
   // --- PAGINACIÓN ---
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(50); // Valor predeterminado a 50 según solicitud
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   // Estados del Formulario
   const [formHouse, setFormHouse] = useState({
@@ -125,7 +124,6 @@ const App = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Función para resetear todos los filtros
   const clearFilters = () => {
     setFilterStage('Todas');
     setFilterStatus('Todos');
@@ -154,15 +152,12 @@ const App = () => {
   }, [toast.show]);
 
   useEffect(() => {
-    if (!isConfigValid || !auth) {
-      setErrorMessage("CONFIG_MISSING");
-      return;
-    }
+    if (!isConfigValid || !auth) return;
     const login = async () => {
       try {
         await signInAnonymously(auth);
       } catch (err) {
-        setErrorMessage("AUTH_ERROR");
+        console.error("Auth error");
       }
     };
     login();
@@ -183,7 +178,6 @@ const App = () => {
         setLoading(false);
       }
     }, (err) => {
-      setErrorMessage("DB_ERROR");
       setLoading(false);
     });
     return () => unsubscribe();
@@ -218,7 +212,6 @@ const App = () => {
     }
   };
 
-  // --- LÓGICA DE FILTRADO Y ORDENAMIENTO ---
   const processedHouses = useMemo(() => {
     let result = houses.filter(h => {
       const stageMatch = filterStage === 'Todas' || h.etapa.toString() === filterStage.replace('Etapa ', '');
@@ -307,7 +300,6 @@ const App = () => {
     document.body.removeChild(link);
   };
 
-  // Determinar si hay filtros activos para mostrar el botón de limpiar
   const hasActiveFilters = filterStage !== 'Todas' || filterStatus !== 'Todos' || filterFachada !== 'Todos' || filterPredial !== 'Todos' || filterGravamen !== 'Todos' || searchTerm !== '';
 
   return (
@@ -420,7 +412,7 @@ const App = () => {
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#F8FAFC]">
           {activeTab === 'control' ? (
-            <div className="space-y-4 max-w-6xl mx-auto">
+            <div className="space-y-3 max-w-6xl mx-auto">
               <div className="flex justify-between items-center px-2">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Encontradas: {processedHouses.length} unidades</p>
                 <div className="flex items-center gap-2">
@@ -431,7 +423,7 @@ const App = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-[1.25rem] shadow-sm border border-slate-100 overflow-hidden animate-in fade-in duration-500">
+              <div className="bg-white rounded-[1rem] shadow-sm border border-slate-100 overflow-hidden animate-in fade-in duration-500">
                 <div className="overflow-x-auto scrollbar-thin">
                   <table className="w-full text-left border-collapse min-w-[850px]">
                     <thead>
@@ -441,7 +433,7 @@ const App = () => {
                         <SortableHeader label="Fachada" sortKey="doc_fachada" sortConfig={sortConfig} onClick={requestSort} />
                         <SortableHeader label="Predial" sortKey="doc_predial" sortConfig={sortConfig} onClick={requestSort} />
                         <SortableHeader label="Gravamen" sortKey="doc_gravamen" sortConfig={sortConfig} onClick={requestSort} />
-                        <th className="p-5 text-center font-bold text-slate-400">Estado Final</th>
+                        <th className="py-3 px-5 text-center font-bold text-slate-400">Estado Final</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 text-sm font-normal">
@@ -449,35 +441,35 @@ const App = () => {
                         const status = (h.doc_fachada === 'OK' && h.doc_predial === 'OK' && h.doc_gravamen === 'OK') ? 'COMPLETO' : 'PENDIENTE';
                         return (
                           <tr key={h.id} className="hover:bg-slate-50/50 transition-colors group">
-                            <td className="p-5 whitespace-nowrap">
-                                <span className="bg-blue-50/60 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-semibold uppercase tracking-tight">Etapa {h.etapa}</span>
+                            <td className="py-2.5 px-5 whitespace-nowrap">
+                                <span className="bg-blue-50/60 text-blue-600 px-2 py-1 rounded-lg text-[9px] font-medium uppercase tracking-tight">Etapa {h.etapa}</span>
                             </td>
-                            <td className="p-5 font-medium text-slate-700 text-sm md:text-base tracking-tight">
+                            <td className="py-2.5 px-5 font-medium text-slate-700 text-sm tracking-tight">
                                 <div className="flex items-center gap-2">
-                                    <div className="p-1.5 bg-blue-50 rounded-lg text-[#4F67EE] shrink-0 shadow-sm border border-blue-100">
-                                        <Home size={14} />
+                                    <div className="p-1 bg-blue-50 rounded-md text-[#4F67EE] shrink-0 border border-blue-100/50">
+                                        <Home size={13} />
                                     </div>
                                     #{h.numero}
                                 </div>
                             </td>
-                            <td className="p-5"><StatusChip status={h.doc_fachada} /></td>
-                            <td className="p-5"><StatusChip status={h.doc_predial} /></td>
-                            <td className="p-5"><StatusChip status={h.doc_gravamen} /></td>
-                            <td className="p-5 text-center"><StatusChipFinal status={status} /></td>
+                            <td className="py-2.5 px-5"><StatusChip status={h.doc_fachada} /></td>
+                            <td className="py-2.5 px-5"><StatusChip status={h.doc_predial} /></td>
+                            <td className="py-2.5 px-5"><StatusChip status={h.doc_gravamen} /></td>
+                            <td className="py-2.5 px-5 text-center"><StatusChipFinal status={status} /></td>
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
                 </div>
-                {processedHouses.length === 0 && <div className="p-20 text-center text-slate-400 text-sm italic">Sin resultados.</div>}
+                {processedHouses.length === 0 && <div className="p-16 text-center text-slate-400 text-sm italic">Sin resultados.</div>}
               </div>
 
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-4 py-2">
-                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="p-2 bg-white rounded-xl border border-slate-200 text-slate-400 disabled:opacity-30 hover:text-[#4F67EE] transition-colors"><ChevronLeft size={18} /></button>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Página {currentPage} de {totalPages}</span>
-                  <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)} className="p-2 bg-white rounded-xl border border-slate-200 text-slate-400 disabled:opacity-30 hover:text-[#4F67EE] transition-colors"><ChevronRight size={18} /></button>
+                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400 disabled:opacity-30 hover:text-[#4F67EE] transition-colors"><ChevronLeft size={16} /></button>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Página {currentPage} de {totalPages}</span>
+                  <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)} className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400 disabled:opacity-30 hover:text-[#4F67EE] transition-colors"><ChevronRight size={16} /></button>
                 </div>
               )}
             </div>
@@ -497,9 +489,9 @@ const App = () => {
                       <div key={s.stage} className="space-y-2 group">
                         <div className="flex justify-between text-[10px] font-medium uppercase tracking-tight">
                           <span className="text-slate-500">Etapa {s.stage}</span>
-                          <span className="text-[#4F67EE] font-bold">{s.comp} / {s.total} <span className="text-slate-300 font-normal">listos</span></span>
+                          <span className="text-[#4F67EE] font-bold">{s.comp} / {s.total} <span className="text-slate-300 font-normal ml-1">listos</span></span>
                         </div>
-                        <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden flex border border-slate-100/50">
+                        <div className="h-2 bg-slate-50 rounded-full overflow-hidden flex border border-slate-100/50">
                           <div className="h-full bg-[#4F67EE] rounded-full transition-all duration-1000 ease-out shadow-sm shadow-blue-200" style={{ width: `${s.total > 0 ? (s.comp/s.total)*100 : 0}%` }}></div>
                         </div>
                       </div>
@@ -509,7 +501,7 @@ const App = () => {
 
                 <div className="bg-white p-6 md:p-8 rounded-[1.25rem] border border-slate-100 shadow-sm flex flex-col items-center">
                   <h4 className="font-bold text-slate-400 text-[10px] uppercase tracking-widest mb-6 self-start">Resumen Global</h4>
-                  <div className="relative w-32 h-32 md:w-44 md:h-44 mb-6 hover:scale-105 transition-transform duration-300">
+                  <div className="relative w-32 h-32 md:w-40 md:h-40 mb-6 hover:scale-105 transition-transform duration-300">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle cx="50%" cy="50%" r="42%" stroke="#F8FAFC" strokeWidth="12" fill="transparent" />
                       <circle cx="50%" cy="50%" r="42%" stroke="#10b981" strokeWidth="12" fill="transparent" strokeDasharray="264" strokeDashoffset={264 * (1 - stats.avance / 100)} strokeLinecap="round" className="transition-all duration-1000 ease-in-out" />
@@ -550,13 +542,13 @@ const SortableHeader = ({ label, sortKey, sortConfig, onClick }) => {
   const isActive = sortConfig.key === sortKey;
   return (
     <th 
-      className="p-5 font-bold cursor-pointer group hover:bg-slate-100 transition-colors select-none"
+      className="py-3 px-5 font-bold cursor-pointer group hover:bg-slate-100 transition-colors select-none"
       onClick={() => onClick(sortKey)}
     >
       <div className="flex items-center gap-2">
         {label}
         <div className="text-slate-300 group-hover:text-slate-500 transition-colors">
-          {!isActive ? <ArrowUpDown size={12} /> : sortConfig.direction === 'asc' ? <ArrowUp size={12} className="text-[#4F67EE]" /> : <ArrowDown size={12} className="text-[#4F67EE]" />}
+          {!isActive ? <ArrowUpDown size={11} /> : sortConfig.direction === 'asc' ? <ArrowUp size={11} className="text-[#4F67EE]" /> : <ArrowDown size={11} className="text-[#4F67EE]" />}
         </div>
       </div>
     </th>
@@ -580,17 +572,17 @@ const FilterSelect = ({ label, value, onChange, options }) => (
 );
 
 const StatusChip = ({ status }) => {
-  const base = "px-3 py-1.5 rounded-xl border text-[10px] font-medium uppercase tracking-tight flex items-center gap-1.5 w-fit transition-all shadow-sm whitespace-nowrap";
-  if (status === 'OK') return <span className={`${base} bg-emerald-50 text-emerald-700 border-emerald-200`}><CheckCircle size={12} /> {status}</span>;
-  if (status === 'Revisión') return <span className={`${base} bg-amber-50 text-amber-700 border-amber-200`}><Clock size={12} /> {status}</span>;
-  return <span className={`${base} bg-rose-50 text-rose-700 border-rose-200`}><AlertCircle size={12} /> {status}</span>;
+  const base = "px-2 py-1 rounded-xl border text-[9px] font-normal uppercase tracking-tight flex items-center gap-1.5 w-fit transition-all shadow-sm whitespace-nowrap";
+  if (status === 'OK') return <span className={`${base} bg-emerald-50 text-emerald-700 border-emerald-200`}><CheckCircle size={11} /> {status}</span>;
+  if (status === 'Revisión') return <span className={`${base} bg-amber-50 text-amber-700 border-amber-200`}><Clock size={11} /> {status}</span>;
+  return <span className={`${base} bg-rose-50 text-rose-700 border-rose-200`}><AlertCircle size={11} /> {status}</span>;
 };
 
 const StatusChipFinal = ({ status }) => {
   const isComplete = status === 'COMPLETO';
-  const base = "px-5 py-2.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest border flex items-center gap-2 justify-center mx-auto w-fit shadow-sm transition-all whitespace-nowrap";
-  if (isComplete) return <span className={`${base} bg-emerald-500 text-white border-emerald-600 shadow-emerald-100`}><CheckCircle size={14} /> Listo</span>;
-  return <span className={`${base} bg-rose-50 text-rose-700 border-rose-200`}><Hourglass size={14} /> Pendiente</span>;
+  const base = "px-4 py-1.5 rounded-2xl text-[9px] font-medium uppercase tracking-widest border flex items-center gap-2 justify-center mx-auto w-fit shadow-sm transition-all whitespace-nowrap";
+  if (isComplete) return <span className={`${base} bg-emerald-500 text-white border-emerald-600 shadow-emerald-100`}><CheckCircle size={13} /> Listo</span>;
+  return <span className={`${base} bg-rose-50 text-rose-700 border-rose-200`}><Hourglass size={13} /> Pendiente</span>;
 };
 
 const KPICard = ({ title, value, icon }) => (
