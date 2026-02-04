@@ -396,17 +396,29 @@ const App = () => {
         <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-8 shrink-0 z-10 shadow-sm">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-slate-500 lg:hidden hover:bg-slate-50 rounded-xl"><Menu size={22} /></button>
-            <div className="flex gap-4 md:gap-8">
+            <div className="flex gap-2 md:gap-8">
               {['control', 'dashboard'].map(tab => (
-                <button key={tab} onClick={() => setActiveTab(tab)} className={`h-16 px-1 text-[10px] md:text-[11px] font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === tab ? 'text-[#4F67EE] border-[#4F67EE]' : 'text-slate-300 border-transparent hover:text-slate-600'}`}>
-                  {tab === 'control' ? 'Registro y Control' : 'Análisis (Dashboard)'}
+                <button 
+                  key={tab} 
+                  onClick={() => setActiveTab(tab)} 
+                  className={`h-16 px-1 text-[9px] sm:text-[10px] md:text-[11px] font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === tab ? 'text-[#4F67EE] border-[#4F67EE]' : 'text-slate-300 border-transparent hover:text-slate-600'}`}
+                >
+                  {tab === 'control' ? (window.innerWidth < 640 ? 'Reg.' : 'Registro') : (window.innerWidth < 640 ? 'Anál.' : 'Análisis')}
                 </button>
               ))}
             </div>
           </div>
-          <div className="relative hidden sm:block">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
-            <input type="text" placeholder="Buscar por número..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 pr-6 py-2 bg-[#F1F5F9] border-none rounded-full text-[11px] font-medium w-48 md:w-60 outline-none focus:ring-2 focus:ring-blue-500/10 placeholder:text-slate-400" />
+          
+          {/* MEJORA: Búsqueda siempre visible en móvil con ancho adaptativo */}
+          <div className="relative flex items-center">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={13} />
+            <input 
+              type="text" 
+              placeholder="Buscar..." 
+              value={searchTerm} 
+              onChange={e => setSearchTerm(e.target.value)} 
+              className="pl-9 pr-3 py-1.5 bg-[#F1F5F9] border-none rounded-full text-[10px] md:text-[11px] font-medium w-24 sm:w-48 md:w-60 outline-none focus:ring-2 focus:ring-blue-500/10 placeholder:text-slate-400 transition-all" 
+            />
           </div>
         </header>
 
@@ -414,9 +426,9 @@ const App = () => {
           {activeTab === 'control' ? (
             <div className="space-y-3 max-w-6xl mx-auto">
               <div className="flex justify-between items-center px-2">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Encontradas: {processedHouses.length} unidades</p>
+                <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Unidades: {processedHouses.length}</p>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Mostrar:</span>
+                  <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Ver:</span>
                   <select value={itemsPerPage} onChange={e => setItemsPerPage(Number(e.target.value))} className="bg-white border border-slate-200 text-[10px] font-bold rounded-lg px-2 py-1 outline-none cursor-pointer">
                     {[10, 25, 50, 114].map(n => <option key={n} value={n}>{n === 114 ? 'Todas' : n}</option>)}
                   </select>
@@ -442,7 +454,7 @@ const App = () => {
                         return (
                           <tr key={h.id} className="hover:bg-slate-50/50 transition-colors group">
                             <td className="py-2.5 px-5 whitespace-nowrap">
-                                <span className="bg-blue-50/60 text-blue-600 px-2 py-1 rounded-lg text-[9px] font-medium uppercase tracking-tight">Etapa {h.etapa}</span>
+                                <span className="bg-blue-50/60 text-blue-600 px-2 py-1 rounded-lg text-[9px] font-semibold uppercase tracking-tight">Etapa {h.etapa}</span>
                             </td>
                             <td className="py-2.5 px-5 font-medium text-slate-700 text-sm tracking-tight">
                                 <div className="flex items-center gap-2">
