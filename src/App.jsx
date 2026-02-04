@@ -324,10 +324,9 @@ const App = () => {
           </section>
 
           <form onSubmit={handleUpdateHouse} className="space-y-5 pt-8 border-t border-slate-100">
-            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 px-1"><PlusCircle size={12} /> Actualizar Casa</h3>
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 px-1"><PlusCircle size={12} /> Actualizar</h3>
             <div className="space-y-4">
               
-              {/* MEJORA UX: Selector de Búsqueda Inteligente */}
               <div className="relative" ref={dropdownRef}>
                 <div className="relative">
                   <input 
@@ -458,7 +457,7 @@ const App = () => {
               </div>
             </div>
           ) : (
-            <div className="space-y-6 md:space-y-8 max-w-6xl mx-auto animate-in fade-in duration-700">
+            <div className="space-y-6 md:space-y-8 max-w-6xl mx-auto animate-in fade-in duration-700 pb-10">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                 <KPICard title="Total Unidades" value={stats.total} icon={<Users className="text-blue-500" size={18} />} />
                 <KPICard title="Expedientes OK" value={stats.completas} icon={<CheckCircle className="text-emerald-500" size={18} />} />
@@ -495,6 +494,57 @@ const App = () => {
                     <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-slate-100"></div> <span className="text-slate-400">Pendientes</span></div>
                   </div>
                 </div>
+              </div>
+
+              {/* NUEVA SECCIÓN: DOCUMENTOS FALTANTES (CUELLO DE BOTELLA) */}
+              <div className="bg-white p-6 md:p-8 rounded-[1.25rem] border border-slate-100 shadow-sm">
+                <h4 className="font-bold text-slate-800 text-[11px] uppercase tracking-widest mb-8 flex items-center gap-2">
+                  <AlertCircle size={16} className="text-rose-500" /> Documentos Faltantes (Cuello de Botella)
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                  {/* Fachada */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Fachada Frontal</p>
+                        <p className="text-2xl font-bold text-slate-800 tracking-tight">{stats.docStats.fachada} <span className="text-sm font-medium text-slate-400">faltan</span></p>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-300">{((stats.docStats.fachada/stats.total)*100).toFixed(0)}%</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100/50">
+                      <div className="bg-rose-500 h-full transition-all duration-1000" style={{ width: `${(stats.docStats.fachada/stats.total)*100}%` }}></div>
+                    </div>
+                  </div>
+
+                  {/* Predial */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Impuesto Predial</p>
+                        <p className="text-2xl font-bold text-slate-800 tracking-tight">{stats.docStats.predial} <span className="text-sm font-medium text-slate-400">faltan</span></p>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-300">{((stats.docStats.predial/stats.total)*100).toFixed(0)}%</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100/50">
+                      <div className="bg-orange-500 h-full transition-all duration-1000" style={{ width: `${(stats.docStats.predial/stats.total)*100}%` }}></div>
+                    </div>
+                  </div>
+
+                  {/* Gravamen */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Cert. Gravamen</p>
+                        <p className="text-2xl font-bold text-slate-800 tracking-tight">{stats.docStats.gravamen} <span className="text-sm font-medium text-slate-400">faltan</span></p>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-300">{((stats.docStats.gravamen/stats.total)*100).toFixed(0)}%</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100/50">
+                      <div className="bg-amber-500 h-full transition-all duration-1000" style={{ width: `${(stats.docStats.gravamen/stats.total)*100}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-8 text-[10px] text-slate-400 italic">Muestra la cantidad de predios que aún NO tienen el documento en estado "OK".</p>
               </div>
             </div>
           )}
