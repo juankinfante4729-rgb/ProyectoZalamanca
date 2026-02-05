@@ -200,6 +200,14 @@ const App = () => {
     const unsubAdmin = onSnapshot(adminDocRef, (docSnap) => {
       if (docSnap.exists()) {
         setAdminDocs(docSnap.data());
+      } else {
+        setDoc(adminDocRef, {
+            doc_formulario: 'Pendiente',
+            doc_entrada: 'Pendiente',
+            doc_ruc: 'Pendiente',
+            doc_cedula_admin: 'Pendiente',
+            doc_plano: 'Pendiente'
+        });
       }
     });
 
@@ -279,14 +287,6 @@ const App = () => {
     return result;
   }, [houses, filterStage, filterStatus, searchTerm, sortConfig]);
 
-  const requestSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
-    setSortConfig({ key, direction });
-  };
-
-  useEffect(() => { setCurrentPage(1); }, [filterStage, filterStatus, searchTerm, sortConfig]);
-
   const paginatedHouses = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return processedHouses.slice(startIndex, startIndex + itemsPerPage);
@@ -324,13 +324,10 @@ const App = () => {
         [h.doc_fachada, h.doc_predial, h.doc_gravamen, h.doc_medidor, h.doc_cedula_prop, h.doc_formulario].every(s => s === 'OK')
     ).length;
 
-    // Cálculo diferenciado para KPI vs Donut
     const totalApprovedDocs = getApprovedCount(source);
     const totalExpectedDocs = totalFiltered * 6;
     const globalAvanceIncremental = totalExpectedDocs > 0 ? ((totalApprovedDocs / totalExpectedDocs) * 100).toFixed(1) : 0;
-    
-    // KPI Superior: Porcentaje de predios finalizados (6 de 6)
-    const pctPrediosFinalizados = totalFiltered > 0 ? ((prediosTotalmenteListos / totalFiltered) * 100).toFixed(1) : 0;
+    const pctEfectividadCierre = totalFiltered > 0 ? ((prediosTotalmenteListos / totalFiltered) * 100).toFixed(1) : 0;
 
     const stageData = [1, 2, 3, 4].map(s => {
       const stageHouses = source.filter(h => h.etapa === s);
@@ -338,7 +335,7 @@ const App = () => {
       const approvedS = getApprovedCount(stageHouses);
       const expectedS = totalS * 6;
       const pctS = expectedS > 0 ? ((approvedS / expectedS) * 100).toFixed(1) : 0;
-      return { stage: s, approved: approvedS, expected: expectedS, pct: pctS };
+      return { stage: s, pct: expectedS > 0 ? ((approvedS / expectedS) * 100).toFixed(1) : 0 };
     });
 
     const docStats = {
@@ -350,7 +347,7 @@ const App = () => {
       formulario: source.filter(h => h.doc_formulario !== 'OK').length,
     };
     
-    return { total: totalFiltered, prediosTotalmenteListos, globalAvanceIncremental, pctPrediosFinalizados, stageData, docStats };
+    return { total: totalFiltered, prediosTotalmenteListos, globalAvanceIncremental, pctEfectividadCierre, stageData, docStats };
   }, [processedHouses]);
 
   const exportToCSV = () => {
@@ -367,6 +364,12 @@ const App = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
   };
 
   return (
@@ -429,7 +432,7 @@ const App = () => {
                     </div>
                   )}
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-3 text-slate-500">
                   <GroupLabel text="Documentos Inmueble" />
                   <CompactDocSelect label="Fachada" value={formHouse.doc_fachada} onChange={v => setFormHouse({...formHouse, doc_fachada: v})} />
                   <CompactDocSelect label="Predial" value={formHouse.doc_predial} onChange={v => setFormHouse({...formHouse, doc_predial: v})} />
@@ -449,7 +452,7 @@ const App = () => {
       </aside>
 
       {/* CONTENIDO PRINCIPAL */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[#F8FAFC]">
+      <main className="flex-1 flex flex-col min-w-0 bg-[#F1F5F9]">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0 z-10 shadow-sm">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarMobileOpen(true)} className="p-2 text-slate-400 lg:hidden hover:bg-slate-50 rounded-xl transition-colors"><Menu size={22} /></button>
@@ -467,9 +470,9 @@ const App = () => {
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6">
           {toast.show && (
-            <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] ${toast.type === 'error' ? 'bg-rose-600' : 'bg-slate-800'} text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 w-[90%] max-w-xs`}>
+            <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] ${toast.type === 'error' ? 'bg-rose-600' : 'bg-slate-900'} text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 w-[90%] max-w-xs`}>
               <div className={`${toast.type === 'error' ? 'bg-white/20' : 'bg-emerald-500'} rounded-full p-1 shrink-0`}>{toast.type === 'error' ? <AlertCircle size={14} /> : <Check size={14} />}</div>
-              <span className="text-xs font-medium truncate">{toast.message}</span>
+              <span className="text-sm font-medium truncate">{toast.message}</span>
             </div>
           )}
 
@@ -477,34 +480,34 @@ const App = () => {
             <div className="space-y-4 max-w-full mx-auto animate-in fade-in duration-300">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-2">
                 <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Unidades: {processedHouses.length} <span className="text-[#4F67EE] ml-1">{houseRangeLabel}</span></p>
-                  <button onClick={exportToCSV} className="text-[10px] text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg transition-all border border-emerald-100 shadow-sm active:scale-95"><Download size={13} /> Exportar Excel</button>
+                  <p className="text-[10px] font-medium text-slate-800 uppercase tracking-widest">Unidades: {processedHouses.length} <span className="text-[#4F67EE] ml-1">{houseRangeLabel}</span></p>
+                  <button onClick={exportToCSV} className="text-[10px] text-emerald-700 hover:text-emerald-800 font-medium flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-200 shadow-sm active:scale-95"><Download size={13} /> Exportar Excel</button>
                 </div>
-                <div className="flex items-center gap-2"><span className="text-[9px] font-medium text-slate-400 uppercase">Mostrar:</span><select value={itemsPerPage} onChange={e => setItemsPerPage(Number(e.target.value))} className="bg-white border border-slate-200 text-[10px] font-medium rounded-lg px-2 py-1 outline-none shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">{[10, 25, 50, 114].map(n => <option key={n} value={n}>{n === 114 ? 'Todas' : n}</option>)}</select></div>
+                <div className="flex items-center gap-2"><span className="text-[9px] font-medium text-slate-500 uppercase">Mostrar:</span><select value={itemsPerPage} onChange={e => setItemsPerPage(Number(e.target.value))} className="bg-white border border-slate-200 text-[10px] font-medium rounded-lg px-2 py-1 outline-none shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">{[10, 25, 50, 114].map(n => <option key={n} value={n}>{n === 114 ? 'Todas' : n}</option>)}</select></div>
               </div>
 
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200">
                   <table className="w-full text-left border-collapse min-w-[1200px]">
                     <thead>
-                      <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-medium uppercase tracking-widest border-b border-slate-100">
+                      <tr className="bg-slate-50/50 text-slate-800 text-[10px] font-medium uppercase tracking-widest border-b border-slate-100">
                         <SortableHeader label="Etapa" sortKey="etapa" sortConfig={sortConfig} onClick={requestSort} />
                         <SortableHeader label="Unidad" sortKey="numero" sortConfig={sortConfig} onClick={requestSort} />
-                        <th className="py-3 px-3 text-center">Fachada</th>
-                        <th className="py-3 px-3 text-center">Predial</th>
-                        <th className="py-3 px-3 text-center">Gravamen</th>
-                        <th className="py-3 px-3 text-center">Medidor</th>
-                        <th className="py-3 px-3 text-center">Cédula</th>
-                        <th className="py-3 px-3 text-center">Formulario</th>
-                        <th className="py-3 px-3 text-center bg-slate-50/30">Estado Final</th>
+                        <th className="py-3 px-3 text-center text-slate-500">Fachada</th>
+                        <th className="py-3 px-3 text-center text-slate-500">Predial</th>
+                        <th className="py-3 px-3 text-center text-slate-500">Gravamen</th>
+                        <th className="py-3 px-3 text-center text-slate-500">Medidor</th>
+                        <th className="py-3 px-3 text-center text-slate-500">Cédula</th>
+                        <th className="py-3 px-3 text-center text-slate-500">Formulario</th>
+                        <th className="py-3 px-3 text-center bg-slate-100/50 text-slate-700 font-medium">Estatus Final</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50 text-xs font-normal text-slate-500">
+                    <tbody className="divide-y divide-slate-50 text-xs font-normal text-slate-600">
                       {paginatedHouses.map(h => {
                         const isComplete = [h.doc_fachada, h.doc_predial, h.doc_gravamen, h.doc_medidor, h.doc_cedula_prop, h.doc_formulario].every(s => s === 'OK');
                         return (
-                          <tr key={h.id} className="hover:bg-slate-50/40 transition-colors group">
-                            <td className="py-2 px-3 whitespace-nowrap">Etapa {h.etapa}</td>
+                          <tr key={h.id} className="hover:bg-slate-50 transition-colors group">
+                            <td className="py-2 px-3 whitespace-nowrap text-slate-500 font-medium">Etapa {h.etapa}</td>
                             <td className="py-2 px-3 font-medium text-slate-700 transition-all"><div className="flex items-center gap-2"><div className="p-1 bg-blue-50/50 rounded-md text-[#4F67EE] border border-blue-100/30 group-hover:bg-[#4F67EE] group-hover:text-white transition-all"><Home size={12} /></div><span>#{h.numero}</span></div></td>
                             <td className="py-2 px-3 text-center"><StatusBadge status={h.doc_fachada} /></td>
                             <td className="py-2 px-3 text-center"><StatusBadge status={h.doc_predial} /></td>
@@ -512,7 +515,7 @@ const App = () => {
                             <td className="py-2 px-3 text-center"><StatusBadge status={h.doc_medidor} /></td>
                             <td className="py-2 px-3 text-center"><StatusBadge status={h.doc_cedula_prop} /></td>
                             <td className="py-2 px-3 text-center"><StatusBadge status={h.doc_formulario} /></td>
-                            <td className="py-2 px-3 text-center bg-slate-50/30 transition-all"><StatusChipFinal status={isComplete ? 'COMPLETO' : 'PENDIENTE'} /></td>
+                            <td className="py-2 px-3 text-center bg-slate-50/40 transition-all font-medium"><StatusChipFinal status={isComplete ? 'COMPLETO' : 'PENDIENTE'} /></td>
                           </tr>
                         );
                       })}
@@ -520,22 +523,32 @@ const App = () => {
                   </table>
                 </div>
               </div>
-
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-4 py-4"><button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400 disabled:opacity-20 transition-all shadow-sm hover:border-[#4F67EE] hover:text-[#4F67EE]"><ChevronLeft size={16} /></button><span className="text-[10px] font-medium text-slate-400 uppercase tracking-tighter">Página {currentPage} de {totalPages}</span><button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)} className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400 disabled:opacity-20 transition-all shadow-sm hover:border-[#4F67EE] hover:text-[#4F67EE]"><ChevronRight size={16} /></button></div>
-              )}
+              {totalPages > 1 && (<div className="flex justify-center items-center gap-4 py-4"><button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400 disabled:opacity-20 shadow-sm hover:border-[#4F67EE] hover:text-[#4F67EE] transition-colors"><ChevronLeft size={16} /></button><span className="text-[10px] font-bold text-slate-800 uppercase tracking-tighter">Página {currentPage} de {totalPages}</span><button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)} className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400 disabled:opacity-20 shadow-sm hover:border-[#4F67EE] hover:text-[#4F67EE] transition-colors"><ChevronRight size={16} /></button></div>)}
             </div>
           ) : (
             <div className="space-y-8 max-w-7xl mx-auto animate-in fade-in duration-500 pb-10">
+              {/* TOP CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <KPICard title="Unidades en Filtro" value={stats.total} icon={<Users className="text-blue-500" size={20} />} />
-                <KPICard title="Expedientes 100% OK" value={stats.prediosTotalmenteListos} icon={<ClipboardCheck className="text-emerald-500" size={20} />} />
-                <KPICard title="Porcentaje de Cierre" value={`${stats.pctPrediosFinalizados}%`} icon={<CheckCircle className="text-emerald-500" size={20} />} />
+                <KPICard title="Unidades en Filtro" value={stats.total} icon={<Users className="text-blue-500" size={24} />} bg="bg-white" />
+                <KPICard title="Expedientes OK (6/6)" value={stats.prediosTotalmenteListos} icon={<ClipboardCheck className="text-emerald-500" size={24} />} bg="bg-white" />
+                
+                {/* INDICADOR RESALTADO: EFECTIVIDAD DE CIERRE */}
+                <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 shadow-md flex items-center gap-5 transition-all hover:shadow-lg">
+                    <div className="bg-white p-4 rounded-2xl border border-emerald-200 shadow-inner text-emerald-600 transition-all shrink-0"><CheckCircle size={28} /></div>
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-medium text-emerald-800/60 uppercase tracking-widest mb-1 truncate">Efectividad de Cierre</p>
+                        <p className="text-3xl font-medium text-emerald-900 tracking-tighter leading-none">{stats.pctEfectividadCierre}%</p>
+                        <p className="text-[9px] text-emerald-600 mt-2 font-normal italic">Carpetas al 100% OK</p>
+                    </div>
+                </div>
               </div>
               
-              <div className="bg-white p-7 md:p-8 rounded-[1.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-[#4F67EE]"></div>
-                  <h4 className="font-medium text-slate-800 text-[11px] uppercase tracking-[0.15em] mb-10 flex items-center gap-3"><ShieldCheck size={20} className="text-[#4F67EE]" /> Administración Global del Conjunto</h4>
+              {/* ADMIN SECTION REDESIGN */}
+              <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 shadow-xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                  <h4 className="font-medium text-white/90 text-[11px] uppercase tracking-[0.2em] mb-10 flex items-center gap-3">
+                    <ShieldCheck size={20} className="text-blue-400" /> Administración Global del Conjunto
+                  </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                       <AdminCard icon={<FileText size={18} />} label="Formulario Conjunto" status={adminDocs.doc_formulario} onUpdate={(v) => handleUpdateAdmin('doc_formulario', v)} />
                       <AdminCard icon={<Camera size={18} />} label="Foto Entrada" status={adminDocs.doc_entrada} onUpdate={(v) => handleUpdateAdmin('doc_entrada', v)} />
@@ -545,44 +558,48 @@ const App = () => {
                   </div>
               </div>
 
+              {/* PROGRESS SECTION REDESIGN */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white p-7 md:p-8 rounded-[1.5rem] border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                  <h4 className="font-medium text-slate-400 text-[10px] uppercase tracking-widest mb-8 flex items-center gap-2"><BarChart3 size={16} /> Rendimiento por Etapa (Peso por Doc.)</h4>
-                  <div className="space-y-6 text-slate-500">
+                {/* RENDIMIENTO POR ETAPA CON FONDO OSCURO */}
+                <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                  <h4 className="font-medium text-slate-800 text-[11px] uppercase tracking-widest mb-10 flex items-center gap-2 border-b border-slate-200 pb-4"><BarChart3 size={16} className="text-blue-500" /> Rendimiento por Etapa</h4>
+                  <div className="space-y-8">
                     {stats.stageData.map(s => (
-                      <div key={s.stage} className="space-y-2.5 group">
-                        <div className="flex justify-between text-[10px] font-medium uppercase tracking-tight"><span className="text-slate-500">Etapa {s.stage}</span><span className="text-[#4F67EE] font-medium">{s.pct}% <span className="text-slate-300 font-normal ml-1">Completado</span></span></div>
-                        <div className="h-2 bg-slate-50 rounded-full overflow-hidden flex border border-slate-100/50 group-hover:border-blue-100 transition-colors"><div className="h-full bg-[#4F67EE] rounded-full transition-all duration-1000 shadow-sm" style={{ width: `${s.pct}%` }}></div></div>
+                      <div key={s.stage} className="space-y-3 group">
+                        <div className="flex justify-between items-end"><span className="text-[10px] font-medium text-slate-500 uppercase tracking-tighter">Etapa {s.stage}</span><span className="text-slate-800 font-medium text-xs">{s.pct}% <span className="text-slate-400 font-normal ml-1 text-[10px]">Docs OK</span></span></div>
+                        <div className="h-2 bg-white rounded-full overflow-hidden flex border border-slate-200 group-hover:border-blue-300 transition-colors shadow-inner"><div className="h-full bg-blue-500 rounded-full transition-all duration-1000 shadow-sm" style={{ width: `${s.pct}%` }}></div></div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="bg-white p-7 md:p-8 rounded-[1.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center transition-all hover:shadow-md">
-                  <h4 className="font-medium text-slate-400 text-[10px] uppercase tracking-widest mb-8 self-start">Resumen Global</h4>
-                  <div className="relative w-40 h-40 mb-8 transition-transform hover:scale-105 duration-300">
+                {/* GLOBAL DONUT CON FONDO AZUL */}
+                <div className="bg-blue-50/50 p-8 rounded-[2rem] border border-blue-100 shadow-sm flex flex-col items-center justify-center transition-all hover:shadow-md group">
+                  <h4 className="font-medium text-blue-900 text-[11px] uppercase tracking-widest mb-10 self-start border-b border-blue-200 pb-4 w-full text-center">Avance de Carga Documental</h4>
+                  <div className="relative w-48 h-48 mb-8 transition-transform group-hover:scale-105 duration-300">
                     <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="50%" cy="50%" r="42%" stroke="#F8FAFC" strokeWidth="15" fill="transparent" />
-                      <circle cx="50%" cy="50%" r="42%" stroke="#10b981" strokeWidth="15" fill="transparent" strokeDasharray="264" strokeDashoffset={264 * (1 - stats.globalAvanceIncremental / 100)} strokeLinecap="round" className="transition-all duration-1000 ease-in-out shadow-sm" />
+                      <circle cx="50%" cy="50%" r="42%" stroke="rgba(255,255,255,1)" strokeWidth="18" fill="transparent" />
+                      <circle cx="50%" cy="50%" r="42%" stroke="#10b981" strokeWidth="18" fill="transparent" strokeDasharray="264" strokeDashoffset={264 * (1 - stats.globalAvanceIncremental / 100)} strokeLinecap="round" className="transition-all duration-1000 ease-in-out shadow-sm" />
                     </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center"><span className="text-3xl font-black text-slate-800 tracking-tighter leading-none">{stats.globalAvanceIncremental}%</span><span className="text-[9px] font-medium text-slate-400 uppercase mt-1 tracking-widest">Documentos OK</span></div>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center"><span className="text-4xl font-medium text-slate-800 tracking-tighter leading-none">{stats.globalAvanceIncremental}%</span><span className="text-[10px] font-medium text-slate-400 uppercase mt-2 tracking-widest">Documentos OK</span></div>
                   </div>
-                  <div className="flex flex-wrap justify-center gap-6 text-[9px] font-medium uppercase tracking-widest text-slate-400">
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm"></div> OKs Individuales</div>
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-slate-100 border border-slate-200"></div> Pendientes</div>
+                  <div className="flex flex-wrap justify-center gap-8 text-[10px] font-medium uppercase tracking-widest text-slate-400 transition-all">
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm"></div> Logrados</div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-white border border-blue-200"></div> Faltantes</div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white p-7 md:p-8 rounded-[1.5rem] border border-slate-100 shadow-sm">
-                <h4 className="font-medium text-slate-800 text-[11px] uppercase tracking-widest mb-10 flex items-center gap-2"><AlertCircle size={18} className="text-rose-500" /> Cuellos de Botella (Docs Propietarios)</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-10 gap-x-12">
-                  <DocMetric label="Fachada" count={stats.docStats.fachada} total={stats.total} color="bg-rose-500" icon={<Camera size={14} />} />
-                  <DocMetric label="Imp. Predial" count={stats.docStats.predial} total={stats.total} color="bg-orange-500" icon={<Building2 size={14} />} />
-                  <DocMetric label="Cert. Gravamen" count={stats.docStats.gravamen} total={stats.total} color="bg-amber-500" icon={<ShieldCheck size={14} />} />
-                  <DocMetric label="Sitio Medidor" count={stats.docStats.medidor} total={stats.total} color="bg-blue-500" icon={<Camera size={14} />} />
-                  <DocMetric label="Cédula Prop." count={stats.docStats.cedula} total={stats.total} color="bg-indigo-500" icon={<UserCheck size={14} />} />
-                  <DocMetric label="Formulario" count={stats.docStats.formulario} total={stats.total} color="bg-purple-500" icon={<FileText size={14} />} />
+              {/* BOTTLENECKS REDESIGN */}
+              <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+                <h4 className="font-medium text-slate-800 text-[11px] uppercase tracking-widest mb-12 flex items-center gap-2 border-b border-slate-100 pb-4"><AlertCircle size={18} className="text-rose-500" /> Documentación en curso</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-12 gap-x-12">
+                  <DocMetric label="Fachada" count={stats.docStats.fachada} total={stats.total} color="bg-rose-100" textColor="text-rose-700" icon={<Camera size={14} className="text-rose-400" />} />
+                  <DocMetric label="Imp. Predial" count={stats.docStats.predial} total={stats.total} color="bg-orange-100" textColor="text-orange-700" icon={<Building2 size={14} className="text-orange-400" />} />
+                  <DocMetric label="Cert. Gravamen" count={stats.docStats.gravamen} total={stats.total} color="bg-amber-100" textColor="text-amber-700" icon={<ShieldCheck size={14} className="text-amber-400" />} />
+                  <DocMetric label="Sitio Medidor" count={stats.docStats.medidor} total={stats.total} color="bg-blue-100" textColor="text-blue-700" icon={<Camera size={14} className="text-blue-400" />} />
+                  <DocMetric label="Cédula Prop." count={stats.docStats.cedula} total={stats.total} color="bg-indigo-100" textColor="text-indigo-700" icon={<UserCheck size={14} className="text-indigo-400" />} />
+                  <DocMetric label="Formulario" count={stats.docStats.formulario} total={stats.total} color="bg-purple-100" textColor="text-purple-700" icon={<FileText size={14} className="text-purple-400" />} />
                 </div>
               </div>
             </div>
@@ -594,40 +611,40 @@ const App = () => {
 };
 
 // --- COMPONENTES ATÓMICOS ---
-const GroupLabel = ({ text }) => <p className="text-[9px] font-medium text-slate-300 uppercase tracking-[0.15em] pt-3 pb-1 border-b border-slate-50 mb-2">{text}</p>;
+const GroupLabel = ({ text }) => <p className="text-[9px] font-medium text-slate-400 uppercase tracking-[0.15em] pt-3 pb-1 border-b border-slate-50 mb-2">{text}</p>;
 
 const CompactDocSelect = ({ label, value, onChange }) => (
     <div className="flex items-center justify-between gap-3 p-1 hover:bg-slate-50 rounded-lg transition-colors group">
-        <label className="text-[10px] font-normal text-slate-500 truncate group-hover:text-slate-700">{label}</label>
+        <label className="text-[10px] font-medium text-slate-700 truncate group-hover:text-slate-900">{label}</label>
         <div className="relative w-28">
-            <select value={value} onChange={e => onChange(e.target.value)} className={`w-full border-none p-1 pr-6 rounded-md text-[10px] font-normal appearance-none outline-none focus:ring-1 ring-blue-500/20 cursor-pointer transition-all ${value === 'OK' ? 'bg-emerald-50 text-emerald-700' : value === 'Revisión' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700'}`}>{Object.values(DOC_STATUS).map(s => <option key={s} value={s}>{s}</option>)}</select>
+            <select value={value} onChange={e => onChange(e.target.value)} className={`w-full border-none p-1 pr-6 rounded-md text-[10px] font-medium appearance-none outline-none focus:ring-1 ring-blue-500/20 cursor-pointer transition-all ${value === 'OK' ? 'bg-emerald-50 text-emerald-700' : value === 'Revisión' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700'}`}>{Object.values(DOC_STATUS).map(s => <option key={s} value={s}>{s}</option>)}</select>
             <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-30 pointer-events-none" />
         </div>
     </div>
 );
 
 const AdminCard = ({ icon, label, status, onUpdate }) => (
-    <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 flex flex-col gap-4 group transition-all hover:bg-white hover:shadow-md hover:border-blue-100">
-        <div className="flex items-center gap-3"><div className="p-2 bg-white rounded-xl text-[#4F67EE] shadow-sm group-hover:bg-blue-50 group-hover:scale-110 transition-all">{icon}</div><p className="text-[9px] font-medium text-slate-700 leading-tight tracking-tighter">{label}</p></div>
+    <div className="p-4 bg-slate-800 rounded-2xl border border-slate-700 flex flex-col gap-4 group transition-all hover:bg-slate-700 hover:scale-[1.02]">
+        <div className="flex items-center gap-3"><div className="p-2 bg-slate-900 rounded-xl text-blue-400 shadow-sm group-hover:bg-slate-800 transition-all">{icon}</div><p className="text-[9px] font-medium text-slate-300 leading-tight tracking-tighter uppercase">{label}</p></div>
         <div className="relative">
-            <select value={status} onChange={e => onUpdate(e.target.value)} className={`w-full p-2 rounded-xl text-[10px] font-normal appearance-none outline-none border transition-all cursor-pointer ${status === 'OK' ? 'bg-emerald-500 text-white border-emerald-600 shadow-sm' : status === 'Revisión' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-white text-rose-700 border-rose-100'}`}>{Object.values(DOC_STATUS).map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}</select>
-            <ChevronDown size={12} className={`absolute right-3 top-1/2 -translate-y-1/2 ${status === 'OK' ? 'text-white' : 'opacity-30'}`} />
+            <select value={status} onChange={e => onUpdate(e.target.value)} className={`w-full p-2 rounded-xl text-[10px] font-normal appearance-none outline-none border transition-all cursor-pointer ${status === 'OK' ? 'bg-emerald-500 text-white border-emerald-400 shadow-sm' : status === 'Revisión' ? 'bg-amber-400 text-slate-900 border-amber-300' : 'bg-slate-900 text-slate-400 border-slate-600 hover:border-slate-500'}`}>{Object.values(DOC_STATUS).map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}</select>
+            <ChevronDown size={12} className={`absolute right-3 top-1/2 -translate-y-1/2 ${status === 'OK' || status === 'Revisión' ? 'text-slate-900' : 'text-slate-500'}`} />
         </div>
     </div>
 );
 
 const StatusBadge = ({ status }) => {
-  const base = "px-2.5 py-0.5 rounded-full border text-[9px] font-normal uppercase tracking-tight flex items-center justify-center gap-1.5 w-full max-w-[90px] mx-auto shadow-sm transition-all";
-  if (status === 'OK') return <span className={`${base} bg-emerald-50 text-emerald-700 border-emerald-200`}><CheckCircle size={10} /> OK</span>;
-  if (status === 'Revisión') return <span className={`${base} bg-amber-50 text-amber-700 border-amber-200`}><Clock size={10} /> REV.</span>;
-  return <span className={`${base} bg-rose-50 text-rose-700 border-rose-200`}><AlertCircle size={10} /> PEND.</span>;
+  const base = "px-2.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-tight flex items-center justify-center gap-1.5 w-full max-w-[90px] mx-auto shadow-sm transition-all";
+  if (status === 'OK') return <span className={`${base} bg-emerald-50 text-emerald-700 border-emerald-100 shadow-none`}><CheckCircle size={10} /> OK</span>;
+  if (status === 'Revisión') return <span className={`${base} bg-amber-50 text-amber-700 border-amber-100 shadow-none`}><Clock size={10} /> REV.</span>;
+  return <span className={`${base} bg-rose-50 text-rose-700 border-rose-100 shadow-none`}><AlertCircle size={10} /> PEND.</span>;
 };
 
 const SortableHeader = ({ label, sortKey, sortConfig, onClick }) => {
   const isActive = sortConfig.key === sortKey;
   return (
-    <th className="py-3 px-3 font-medium cursor-pointer group hover:bg-slate-100 transition-colors select-none text-slate-400" onClick={() => onClick(sortKey)}>
-      <div className="flex items-center gap-2">{label}<div className="text-slate-300 group-hover:text-slate-500">{!isActive ? <ArrowUpDown size={11} /> : sortConfig.direction === 'asc' ? <ArrowUp size={11} className="text-[#4F67EE]" /> : <ArrowDown size={11} className="text-[#4F67EE]" />}</div></div>
+    <th className="py-3 px-3 font-bold cursor-pointer group hover:bg-slate-100 transition-colors select-none text-slate-800" onClick={() => onClick(sortKey)}>
+      <div className="flex items-center gap-2">{label}<div className="text-slate-400 group-hover:text-slate-600 transition-all">{!isActive ? <ArrowUpDown size={11} /> : sortConfig.direction === 'asc' ? <ArrowUp size={11} className="text-[#4F67EE]" /> : <ArrowDown size={11} className="text-[#4F67EE]" />}</div></div>
     </th>
   );
 };
@@ -635,7 +652,7 @@ const SortableHeader = ({ label, sortKey, sortConfig, onClick }) => {
 const FilterSelect = ({ label, value, onChange, options, showIcons, collapsed, icon }) => (
   <div className={`space-y-1.5 ${collapsed ? 'flex justify-center' : ''}`}>
     {!collapsed ? (
-        <><label className="text-[10px] font-medium text-slate-400 ml-1">{label}</label><div className="relative"><select value={value} onChange={e => onChange(e.target.value)} className="w-full bg-[#F1F5F9] border-none p-2 rounded-xl text-[11px] outline-none focus:ring-2 ring-blue-500/10 transition-all cursor-pointer appearance-none text-slate-700 font-normal transition-colors">{options.map(opt => (<option key={opt} value={opt}>{opt.includes('Ver') ? opt : opt === 'Todas' || opt === 'Todos' ? `Ver ${opt}` : opt}</option>))}</select><ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" /></div></>
+        <><label className="text-[10px] font-medium text-slate-800 ml-1 uppercase tracking-tighter">{label}</label><div className="relative"><select value={value} onChange={e => onChange(e.target.value)} className="w-full bg-[#F1F5F9] border-none p-2 rounded-xl text-[11px] outline-none focus:ring-2 ring-blue-500/10 transition-all cursor-pointer appearance-none text-slate-900 font-medium transition-colors">{options.map(opt => (<option key={opt} value={opt}>{opt.includes('Ver') ? opt : opt === 'Todas' || opt === 'Todos' ? `Ver ${opt}` : opt}</option>))}</select><ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" /></div></>
     ) : (
         <div className={`p-2 rounded-xl transition-colors cursor-pointer ${value !== 'Todas' && value !== 'Todos' ? 'bg-blue-50 text-[#4F67EE]' : 'text-slate-300 hover:text-[#4F67EE]'}`} title={`${label}: ${value}`}>{icon}</div>
     )}
@@ -644,24 +661,35 @@ const FilterSelect = ({ label, value, onChange, options, showIcons, collapsed, i
 
 const StatusChipFinal = ({ status }) => {
   const isComplete = status === 'COMPLETO';
-  const base = "px-3 py-1 rounded-full text-[9px] font-medium uppercase tracking-widest border flex items-center gap-2 justify-center mx-auto w-fit shadow-sm transition-all";
-  if (isComplete) return <span className={`${base} bg-emerald-500 text-white border-emerald-600 shadow-md shadow-emerald-100`}><Check size={12} /> Listo</span>;
-  return <span className={`${base} bg-rose-50 text-rose-700 border-rose-200 transition-all`}><Hourglass size={12} /> Pendiente</span>;
+  const base = "px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border flex items-center gap-2 justify-center mx-auto w-fit shadow-sm transition-all";
+  if (isComplete) return <span className={`${base} bg-emerald-500 text-white border-emerald-600 shadow-sm shadow-emerald-100`}><Check size={12} /> Listo</span>;
+  return <span className={`${base} bg-rose-100 text-rose-800 border-rose-200 shadow-none transition-all`}><Hourglass size={12} /> Pendiente</span>;
 };
 
-const KPICard = ({ title, value, icon }) => (
-  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-5 group transition-all hover:translate-y-[-2px] hover:shadow-md">
-    <div className="bg-[#F8FAFC] p-3.5 rounded-xl border border-white shadow-inner group-hover:bg-[#4F67EE] group-hover:text-white transition-all shrink-0">{icon}</div>
-    <div className="min-w-0"><p className="text-[9px] font-medium text-slate-400 uppercase tracking-[0.1em] mb-0.5 truncate">{title}</p><p className="text-2xl font-semibold text-slate-700 tracking-tighter leading-none">{value}</p></div>
+const KPICard = ({ title, value, icon, bg }) => (
+  <div className={`${bg} p-6 rounded-[2rem] border border-slate-200 shadow-sm flex items-center gap-6 group transition-all hover:translate-y-[-2px] hover:shadow-md`}>
+    <div className="bg-slate-50 p-4 rounded-2xl border border-white shadow-inner group-hover:bg-[#4F67EE]/10 group-hover:text-[#4F67EE] transition-all shrink-0">{icon}</div>
+    <div className="min-w-0"><p className="text-[10px] font-medium text-slate-500 uppercase tracking-[0.2em] mb-1 truncate">{title}</p><p className="text-3xl font-medium text-slate-800 tracking-tighter leading-none">{value}</p></div>
   </div>
 );
 
-const DocMetric = ({ label, count, total, color, icon }) => {
+const DocMetric = ({ label, count, total, color, textColor, icon }) => {
   const pct = total > 0 ? ((count / total) * 100).toFixed(0) : 0;
   return (
-    <div className="space-y-3 group cursor-default transition-all">
-      <div className="flex justify-between items-end"><div><div className="flex items-center gap-2 mb-1.5 transition-all group-hover:translate-x-1"><div className={`p-1.5 rounded-lg ${color} bg-opacity-10 text-slate-800`}>{icon}</div><p className="text-[10px] font-medium text-slate-500 uppercase tracking-tight">{label}</p></div><p className="text-2xl font-semibold text-slate-800 tracking-tight leading-none">{count} <span className="text-xs font-normal text-slate-400">faltan</span></p></div><span className="text-[11px] font-medium text-slate-300 group-hover:text-slate-600 transition-colors">{pct}%</span></div>
-      <div className="h-1 bg-slate-50 rounded-full overflow-hidden border border-slate-100/50"><div className={`${color} h-full transition-all duration-1000 ease-in-out shadow-sm`} style={{ width: `${pct}%` }}></div></div>
+    <div className="space-y-4 group cursor-default transition-all">
+      <div className="flex justify-between items-end">
+          <div>
+            <div className="flex items-center gap-3 mb-2 transition-all group-hover:translate-x-0.5">
+                <div className={`p-2 rounded-xl ${color} text-slate-600 shadow-sm`}>{icon}</div>
+                <p className="text-[10px] font-medium text-slate-800 uppercase tracking-widest">{label}</p>
+            </div>
+            <p className="text-3xl font-medium text-slate-900 tracking-tighter leading-none">{count} <span className="text-xs font-medium text-slate-400 uppercase ml-1 tracking-tighter">faltan</span></p>
+          </div>
+          <span className={`text-[12px] font-medium ${textColor} group-hover:scale-110 transition-transform`}>{pct}%</span>
+      </div>
+      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200 shadow-inner">
+        <div className={`${color.replace('100', '500')} h-full transition-all duration-1000 ease-in-out shadow-sm`} style={{ width: `${pct}%` }}></div>
+      </div>
     </div>
   );
 };
