@@ -122,6 +122,14 @@ const App = () => {
   const [filterStatus, setFilterStatus] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // --- NUEVOS FILTROS POR DOCUMENTO ---
+  const [filterFachada, setFilterFachada] = useState('Todos');
+  const [filterPredial, setFilterPredial] = useState('Todos');
+  const [filterGravamen, setFilterGravamen] = useState('Todos');
+  const [filterMedidor, setFilterMedidor] = useState('Todos');
+  const [filterCedula, setFilterCedula] = useState('Todos');
+  const [filterFormulario, setFilterFormulario] = useState('Todos');
+
   // --- ORDENAMIENTO ---
   const [sortConfig, setSortConfig] = useState({ key: 'numero', direction: 'asc' });
 
@@ -140,13 +148,27 @@ const App = () => {
   const dropdownRef = useRef(null);
 
   const hasActiveFilters = useMemo(() => {
-    return filterStage !== 'Todas' || filterStatus !== 'Todos' || searchTerm !== '';
-  }, [filterStage, filterStatus, searchTerm]);
+    return filterStage !== 'Todas' || 
+           filterStatus !== 'Todos' || 
+           searchTerm !== '' ||
+           filterFachada !== 'Todos' ||
+           filterPredial !== 'Todos' ||
+           filterGravamen !== 'Todos' ||
+           filterMedidor !== 'Todos' ||
+           filterCedula !== 'Todos' ||
+           filterFormulario !== 'Todos';
+  }, [filterStage, filterStatus, searchTerm, filterFachada, filterPredial, filterGravamen, filterMedidor, filterCedula, filterFormulario]);
 
   const clearFilters = () => {
     setFilterStage('Todas');
     setFilterStatus('Todos');
     setSearchTerm('');
+    setFilterFachada('Todos');
+    setFilterPredial('Todos');
+    setFilterGravamen('Todos');
+    setFilterMedidor('Todos');
+    setFilterCedula('Todos');
+    setFilterFormulario('Todos');
     setCurrentPage(1);
   };
 
@@ -270,8 +292,19 @@ const App = () => {
       const isComplete = [h.doc_fachada, h.doc_predial, h.doc_gravamen, h.doc_medidor, h.doc_cedula_prop, h.doc_formulario].every(s => s === 'OK');
       const hStatus = isComplete ? 'COMPLETO' : 'PENDIENTE';
       const statusMatch = filterStatus === 'Todos' || hStatus === filterStatus;
+      
+      const fachadaMatch = filterFachada === 'Todos' || h.doc_fachada === filterFachada;
+      const predialMatch = filterPredial === 'Todos' || h.doc_predial === filterPredial;
+      const gravamenMatch = filterGravamen === 'Todos' || h.doc_gravamen === filterGravamen;
+      const medidorMatch = filterMedidor === 'Todos' || h.doc_medidor === filterMedidor;
+      const cedulaMatch = filterCedula === 'Todos' || h.doc_cedula_prop === filterCedula;
+      const formMatch = filterFormulario === 'Todos' || h.doc_formulario === filterFormulario;
+      
       const searchMatch = h.numero.toString().includes(searchTerm);
-      return stageMatch && statusMatch && searchMatch;
+
+      return stageMatch && statusMatch && searchMatch && 
+             fachadaMatch && predialMatch && gravamenMatch && 
+             medidorMatch && cedulaMatch && formMatch;
     });
 
     if (sortConfig.key) {
@@ -285,7 +318,7 @@ const App = () => {
       });
     }
     return result;
-  }, [houses, filterStage, filterStatus, searchTerm, sortConfig]);
+  }, [houses, filterStage, filterStatus, searchTerm, sortConfig, filterFachada, filterPredial, filterGravamen, filterMedidor, filterCedula, filterFormulario]);
 
   const paginatedHouses = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -407,7 +440,7 @@ const App = () => {
           <section className="space-y-4">
             {!isSidebarCollapsed && (
               <div className="flex items-center justify-between px-1">
-                <h3 className="text-[10px] font-semibold text-slate-800 uppercase tracking-widest flex items-center gap-2"><Filter size={12} className="text-[#4F67EE]" /> Filtros</h3>
+                <h3 className="text-[10px] font-semibold text-slate-800 uppercase tracking-widest flex items-center gap-2"><Filter size={12} className="text-[#4F67EE]" /> Filtros Gral.</h3>
                 {hasActiveFilters && (
                   <button onClick={clearFilters} className="text-[9px] font-semibold text-[#4F67EE] uppercase hover:underline"><RotateCcw size={10} /> Reset</button>
                 )}
@@ -415,7 +448,7 @@ const App = () => {
             )}
             <div className="space-y-3">
               <FilterSelect label="Etapa" value={filterStage} onChange={setFilterStage} options={['Todas', ...STAGES.map(s => `Etapa ${s}`)]} collapsed={isSidebarCollapsed} icon={<Building2 size={16} className="text-slate-600" />} />
-              <FilterSelect label="Estatus" value={filterStatus} onChange={setFilterStatus} options={['Todos', 'COMPLETO', 'PENDIENTE']} showIcons collapsed={isSidebarCollapsed} icon={<Clock size={16} className="text-slate-600" />} />
+              <FilterSelect label="Estatus Carpeta" value={filterStatus} onChange={setFilterStatus} options={['Todos', 'COMPLETO', 'PENDIENTE']} showIcons collapsed={isSidebarCollapsed} icon={<Clock size={16} className="text-slate-600" />} />
             </div>
           </section>
 
@@ -447,7 +480,7 @@ const App = () => {
               </div>
             </form>
           ) : (
-            <div className="flex flex-col items-center pt-4 border-t border-slate-100 gap-6 text-[#4F67EE] opacity-60"><PlusCircle size={20} /><Home size={20} /><FileText size={20} /></div>
+            <div className="flex flex-col items-center pt-4 border-t border-slate-100 gap-6 text-[#4F67EE] opacity-40"><PlusCircle size={20} /><Home size={20} /><FileText size={20} /></div>
           )}
         </div>
       </aside>
@@ -478,7 +511,7 @@ const App = () => {
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6">
           {toast.show && (
-            <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] ${toast.type === 'error' ? 'bg-rose-600' : 'bg-slate-800'} text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 w-[90%] max-w-xs`}>
+            <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] ${toast.type === 'error' ? 'bg-rose-600' : 'bg-slate-900'} text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 w-[90%] max-w-xs`}>
               <div className={`${toast.type === 'error' ? 'bg-white/20' : 'bg-emerald-500'} rounded-full p-1 shrink-0`}>
                 {toast.type === 'error' ? <AlertCircle size={14} /> : <Check size={14} />}
               </div>
@@ -508,12 +541,15 @@ const App = () => {
                       <tr className="bg-slate-50/50 text-slate-800 text-[10px] font-semibold uppercase tracking-widest border-b border-slate-100">
                         <SortableHeader label="Etapa" sortKey="etapa" sortConfig={sortConfig} onClick={requestSort} />
                         <SortableHeader label="Unidad" sortKey="numero" sortConfig={sortConfig} onClick={requestSort} />
-                        <th className="py-3 px-3 text-center text-slate-700 text-[9px] font-semibold uppercase">Fachada</th>
-                        <th className="py-3 px-3 text-center text-slate-700 text-[9px] font-semibold uppercase">Predial</th>
-                        <th className="py-3 px-3 text-center text-slate-700 text-[9px] font-semibold uppercase">Gravamen</th>
-                        <th className="py-3 px-3 text-center text-slate-700 text-[9px] font-semibold uppercase">Medidor</th>
-                        <th className="py-3 px-3 text-center text-slate-700 text-[9px] font-semibold uppercase">Cédula</th>
-                        <th className="py-3 px-3 text-center text-slate-700 text-[9px] font-semibold uppercase">Formulario</th>
+                        
+                        {/* CABECERAS CON FILTRO INTEGRADO */}
+                        <HeaderWithFilter label="Fachada" value={filterFachada} onChange={setFilterFachada} />
+                        <HeaderWithFilter label="Predial" value={filterPredial} onChange={setFilterPredial} />
+                        <HeaderWithFilter label="Gravamen" value={filterGravamen} onChange={setFilterGravamen} />
+                        <HeaderWithFilter label="Medidor" value={filterMedidor} onChange={setFilterMedidor} />
+                        <HeaderWithFilter label="Cédula" value={filterCedula} onChange={setFilterCedula} />
+                        <HeaderWithFilter label="Formulario" value={filterFormulario} onChange={setFilterFormulario} />
+
                         <th className="py-3 px-3 text-center bg-slate-100/30 text-slate-700 font-semibold text-[9px] uppercase">Estatus Final</th>
                       </tr>
                     </thead>
@@ -538,15 +574,15 @@ const App = () => {
                   </table>
                 </div>
               </div>
-              {totalPages > 1 && (<div className="flex justify-center items-center gap-4 py-4"><button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400 disabled:opacity-20 transition-all shadow-sm hover:border-[#4F67EE] hover:text-[#4F67EE]"><ChevronLeft size={16} /></button><span className="text-[10px] font-semibold text-slate-800 uppercase tracking-tighter">Página {currentPage} de {totalPages}</span><button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)} className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400 disabled:opacity-20 transition-all shadow-sm hover:border-[#4F67EE] hover:text-[#4F67EE]"><ChevronRight size={16} /></button></div>)}
+              {totalPages > 1 && (<div className="flex justify-center items-center gap-4 py-4"><button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400 disabled:opacity-20 shadow-sm hover:border-[#4F67EE] hover:text-[#4F67EE] transition-colors"><ChevronLeft size={16} /></button><span className="text-[10px] font-semibold text-slate-800 uppercase tracking-tighter">Página {currentPage} de {totalPages}</span><button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)} className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-400 disabled:opacity-20 shadow-sm hover:border-[#4F67EE] hover:text-[#4F67EE] transition-colors"><ChevronRight size={16} /></button></div>)}
             </div>
           ) : (
             <div className="space-y-8 max-w-7xl mx-auto animate-in fade-in duration-500 pb-10">
+              {/* TOP CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <KPICard title="Unidades en Filtro" value={stats.total} icon={<Users className="text-blue-500" size={20} />} bg="bg-white" />
-                <KPICard title="Expedientes OK (6/6)" value={stats.prediosTotalmenteListos} icon={<ClipboardCheck className="text-emerald-600" size={20} />} bg="bg-white" />
+                <KPICard title="Unidades en Filtro" value={stats.total} icon={<Users className="text-blue-500" size={24} />} bg="bg-white" />
+                <KPICard title="Expedientes OK (6/6)" value={stats.prediosTotalmenteListos} icon={<ClipboardCheck className="text-emerald-600" size={24} />} bg="bg-white" />
                 
-                {/* INDICADOR RESALTADO: EFECTIVIDAD DE CIERRE */}
                 <div className="bg-emerald-50/80 p-5 rounded-2xl border border-emerald-200 shadow-sm flex items-center gap-5 transition-all hover:shadow-md">
                     <div className="bg-white p-3.5 rounded-xl border border-emerald-100 shadow-inner text-emerald-600 transition-all shrink-0"><CheckCircle size={20} /></div>
                     <div className="min-w-0">
@@ -556,7 +592,6 @@ const App = () => {
                 </div>
               </div>
               
-              {/* ADMIN SECTION REDESIGN */}
               <div className="bg-white p-8 rounded-[1.5rem] border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow text-slate-800">
                   <div className="absolute top-0 left-0 w-1 h-full bg-[#4F67EE]/40"></div>
                   <h4 className="font-semibold text-slate-800 text-[11px] uppercase tracking-[0.15em] mb-10 flex items-center gap-3"><ShieldCheck size={20} className="text-[#4F67EE]/60" /> Administración Global del Conjunto</h4>
@@ -570,24 +605,24 @@ const App = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-slate-300/30 p-7 md:p-8 rounded-[1.5rem] border border-slate-200 shadow-sm transition-all hover:shadow-md text-slate-800">
+                <div className="bg-slate-50/80 p-7 md:p-8 rounded-[1.5rem] border border-slate-200 shadow-sm transition-all hover:shadow-md text-slate-800">
                   <h4 className="font-semibold text-slate-800 text-[10px] uppercase tracking-widest mb-8 flex items-center gap-2"><BarChart3 size={16} /> Rendimiento por Etapa (Peso por Doc.)</h4>
                   <div className="space-y-6">
                     {stats.stageData.map(s => (
                       <div key={s.stage} className="space-y-2.5 group">
-                        <div className="flex justify-between text-[10px] font-semibold uppercase tracking-tight"><span className="text-slate-600">Etapa {s.stage}</span><span className="text-emerald-700 font-semibold">{s.pct}% <span className="text-slate-900 font-normal ml-1">Docs OK</span></span></div>
+                        <div className="flex justify-between text-[10px] font-semibold uppercase tracking-tight"><span className="text-slate-700">Etapa {s.stage}</span><span className="text-emerald-700 font-semibold">{s.pct}% <span className="text-slate-500 font-normal ml-1">Docs OK</span></span></div>
                         <div className="h-1.5 bg-white rounded-full overflow-hidden flex border border-slate-200 transition-colors group-hover:border-emerald-200 shadow-inner"><div className="h-full bg-emerald-500/80 rounded-full transition-all duration-1000 shadow-sm" style={{ width: `${s.pct}%` }}></div></div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="bg-blue-300/30 p-7 md:p-8 rounded-[1.5rem] border border-blue-100 shadow-sm flex flex-col items-center justify-center transition-all hover:shadow-md group">
+                <div className="bg-blue-50/30 p-7 md:p-8 rounded-[1.5rem] border border-blue-100 shadow-sm flex flex-col items-center justify-center transition-all hover:shadow-md group">
                   <h4 className="font-semibold text-blue-900 text-[10px] uppercase tracking-widest mb-8 self-start">Avance Global de Documentos</h4>
                   <div className="relative w-40 h-40 mb-8 transition-transform group-hover:scale-105 duration-300">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle cx="50%" cy="50%" r="42%" stroke="rgba(255,255,255,1)" strokeWidth="15" fill="transparent" />
-                      <circle cx="50%" cy="50%" r="42%" stroke="#10b981" strokeWidth="15" fill="transparent" strokeDasharray="264" strokeDashoffset={264 * (1 - stats.globalAvanceIncremental / 100)} strokeLinecap="round" className="transition-all duration-1000 shadow-sm" />
+                      <circle cx="50%" cy="50%" r="42%" stroke="#10b981" strokeWidth="15" fill="transparent" strokeDasharray="264" strokeDashoffset={264 * (1 - stats.globalAvanceIncremental / 100)} strokeLinecap="round" className="transition-all duration-1000 ease-in-out shadow-sm" />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center"><span className="text-3xl font-light text-slate-800 tracking-tighter leading-none">{stats.globalAvanceIncremental}%</span><span className="text-[9px] font-semibold text-slate-600 uppercase mt-1 tracking-widest">Docs OK</span></div>
                   </div>
@@ -634,7 +669,7 @@ const AdminCard = ({ icon, label, status, onUpdate }) => (
     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col gap-4 group transition-all hover:bg-white hover:shadow-md">
         <div className="flex items-center gap-3"><div className="p-2 bg-white rounded-xl text-blue-500 shadow-sm group-hover:bg-blue-50 transition-all">{icon}</div><p className="text-[9px] font-semibold text-slate-700 leading-tight tracking-tighter uppercase">{label}</p></div>
         <div className="relative">
-            <select value={status} onChange={e => onUpdate(e.target.value)} className={`w-full p-2 rounded-xl text-[10px] font-semibold appearance-none outline-none border transition-all cursor-pointer ${status === 'OK' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : status === 'Revisión' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'}`}>{Object.values(DOC_STATUS).map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}</select>
+            <select value={status} onChange={e => onUpdate(e.target.value)} className={`w-full p-2 rounded-xl text-[10px] font-semibold appearance-none outline-none border border-slate-100 transition-all cursor-pointer ${status === 'OK' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-none' : status === 'Revisión' ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-none' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'}`}>{Object.values(DOC_STATUS).map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}</select>
             <ChevronDown size={12} className={`absolute right-3 top-1/2 -translate-y-1/2 opacity-50 text-slate-800`} />
         </div>
     </div>
@@ -656,6 +691,22 @@ const SortableHeader = ({ label, sortKey, sortConfig, onClick }) => {
   );
 };
 
+const HeaderWithFilter = ({ label, value, onChange }) => (
+  <th className="py-3 px-3">
+    <div className="flex flex-col items-center gap-1.5">
+      <span className="text-slate-800 font-semibold text-[9px] uppercase tracking-wider">{label}</span>
+      <select 
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="text-[8px] bg-white border border-slate-200 rounded px-1 py-0.5 outline-none font-normal w-full max-w-[70px] text-slate-600 focus:ring-1 ring-blue-500/20"
+      >
+        <option value="Todos">Todos</option>
+        {Object.values(DOC_STATUS).map(s => <option key={s} value={s}>{s}</option>)}
+      </select>
+    </div>
+  </th>
+);
+
 const FilterSelect = ({ label, value, onChange, options, showIcons, collapsed, icon }) => (
   <div className={`space-y-1.5 ${collapsed ? 'flex justify-center' : ''}`}>
     {!collapsed ? (
@@ -676,7 +727,7 @@ const StatusChipFinal = ({ status }) => {
 const KPICard = ({ title, value, icon, bg }) => (
   <div className={`${bg} p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-5 group transition-all hover:translate-y-[-1px] hover:shadow-md`}>
     <div className="bg-[#F8FAFC] p-3.5 rounded-xl border border-white shadow-inner group-hover:bg-[#4F67EE]/10 group-hover:text-[#4F67EE] transition-all shrink-0">{icon}</div>
-    <div className="min-w-0"><p className="text-[9px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-0.5 truncate">{title}</p><p className="text-2xl font-light text-slate-800 tracking-tighter leading-none">{value}</p></div>
+    <div className="min-w-0"><p className="text-[9px] font-semibold text-slate-600 uppercase tracking-[0.1em] mb-0.5 truncate">{title}</p><p className="text-2xl font-light text-slate-800 tracking-tighter leading-none">{value}</p></div>
   </div>
 );
 
