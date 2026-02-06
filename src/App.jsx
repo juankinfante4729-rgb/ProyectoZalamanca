@@ -397,16 +397,42 @@ const App = () => {
   }, [processedHouses]);
 
   const exportToCSV = () => {
-    const headers = ["Casa", "Etapa", "Fachada", "Predial", "Gravamen", "Medidor", "Cedula", "Formulario", "Estado Final"];
-    const rows = processedHouses.map(h => [
-      h.numero, h.etapa, h.doc_fachada, h.doc_predial, h.doc_gravamen, h.doc_medidor, h.doc_cedula_prop, h.doc_formulario,
-      ([h.doc_fachada, h.doc_predial, h.doc_gravamen, h.doc_medidor, h.doc_cedula_prop, h.doc_formulario].every(s => s === 'OK')) ? 'COMPLETO' : 'PENDIENTE'
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const headers = ["Casa", "Etapa", "Fachada", "Predial", "Gravamen", "Sitio Medidor", "Cédula", "Formulario", "Estado Final"];
+    
+    const rows = processedHouses.map(h => {
+      // Normalización de estados con valor por defecto 'Pendiente' para registros antiguos
+      const fachada = h.doc_fachada || 'Pendiente';
+      const predial = h.doc_predial || 'Pendiente';
+      const gravamen = h.doc_gravamen || 'Pendiente';
+      const medidor = h.doc_medidor || 'Pendiente';
+      const cedula = h.doc_cedula_prop || 'Pendiente';
+      const formulario = h.doc_formulario || 'Pendiente';
+      
+      // Cálculo del estado final para el Excel (Suavizado de mayúsculas)
+      const isComplete = [fachada, predial, gravamen, medidor, cedula, formulario].every(s => s === 'OK');
+      const finalStatusString = isComplete ? 'Completo' : 'Pendiente';
+
+      return [
+        h.numero,
+        `Etapa ${h.etapa}`,
+        fachada,
+        predial,
+        gravamen,
+        medidor,
+        cedula,
+        formulario,
+        finalStatusString
+      ];
+    });
+
+    // Construcción del contenido CSV
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Alcazar_Reporte_Filtro.csv`);
+    link.setAttribute("download", `Reporte_Alcazar_Documentacion.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
