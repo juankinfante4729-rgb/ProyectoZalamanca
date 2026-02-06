@@ -570,19 +570,19 @@ const App = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-slate-50/80 p-7 md:p-8 rounded-[1.5rem] border border-slate-200 shadow-sm transition-all hover:shadow-md text-slate-800">
+                <div className="bg-slate-300/30 p-7 md:p-8 rounded-[1.5rem] border border-slate-200 shadow-sm transition-all hover:shadow-md text-slate-800">
                   <h4 className="font-semibold text-slate-800 text-[10px] uppercase tracking-widest mb-8 flex items-center gap-2"><BarChart3 size={16} /> Rendimiento por Etapa (Peso por Doc.)</h4>
                   <div className="space-y-6">
                     {stats.stageData.map(s => (
                       <div key={s.stage} className="space-y-2.5 group">
-                        <div className="flex justify-between text-[10px] font-semibold uppercase tracking-tight"><span className="text-slate-700">Etapa {s.stage}</span><span className="text-emerald-700 font-semibold">{s.pct}% <span className="text-slate-500 font-normal ml-1">Docs OK</span></span></div>
+                        <div className="flex justify-between text-[10px] font-semibold uppercase tracking-tight"><span className="text-slate-600">Etapa {s.stage}</span><span className="text-emerald-700 font-semibold">{s.pct}% <span className="text-slate-900 font-normal ml-1">Docs OK</span></span></div>
                         <div className="h-1.5 bg-white rounded-full overflow-hidden flex border border-slate-200 transition-colors group-hover:border-emerald-200 shadow-inner"><div className="h-full bg-emerald-500/80 rounded-full transition-all duration-1000 shadow-sm" style={{ width: `${s.pct}%` }}></div></div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="bg-blue-50/30 p-7 md:p-8 rounded-[1.5rem] border border-blue-100 shadow-sm flex flex-col items-center justify-center transition-all hover:shadow-md group">
+                <div className="bg-blue-300/30 p-7 md:p-8 rounded-[1.5rem] border border-blue-100 shadow-sm flex flex-col items-center justify-center transition-all hover:shadow-md group">
                   <h4 className="font-semibold text-blue-900 text-[10px] uppercase tracking-widest mb-8 self-start">Avance Global de Documentos</h4>
                   <div className="relative w-40 h-40 mb-8 transition-transform group-hover:scale-105 duration-300">
                     <svg className="w-full h-full transform -rotate-90">
