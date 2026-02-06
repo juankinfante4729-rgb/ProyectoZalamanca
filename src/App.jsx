@@ -122,7 +122,7 @@ const App = () => {
   const [filterStatus, setFilterStatus] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // --- NUEVOS FILTROS POR DOCUMENTO ---
+  // --- FILTROS POR DOCUMENTO ---
   const [filterFachada, setFilterFachada] = useState('Todos');
   const [filterPredial, setFilterPredial] = useState('Todos');
   const [filterGravamen, setFilterGravamen] = useState('Todos');
@@ -286,19 +286,31 @@ const App = () => {
       }
   };
 
+  // --- LÓGICA DE FILTRADO CORREGIDA ---
   const processedHouses = useMemo(() => {
     let result = houses.filter(h => {
+      // Normalización de estados con valor por defecto 'Pendiente' para registros antiguos
+      const docFachada = h.doc_fachada || 'Pendiente';
+      const docPredial = h.doc_predial || 'Pendiente';
+      const docGravamen = h.doc_gravamen || 'Pendiente';
+      const docMedidor = h.doc_medidor || 'Pendiente';
+      const docCedula = h.doc_cedula_prop || 'Pendiente';
+      const docFormulario = h.doc_formulario || 'Pendiente';
+
       const stageMatch = filterStage === 'Todas' || h.etapa.toString() === filterStage.replace('Etapa ', '');
-      const isComplete = [h.doc_fachada, h.doc_predial, h.doc_gravamen, h.doc_medidor, h.doc_cedula_prop, h.doc_formulario].every(s => s === 'OK');
+      
+      // Cálculo de completitud basado en los valores normalizados
+      const isComplete = [docFachada, docPredial, docGravamen, docMedidor, docCedula, docFormulario].every(s => s === 'OK');
       const hStatus = isComplete ? 'COMPLETO' : 'PENDIENTE';
       const statusMatch = filterStatus === 'Todos' || hStatus === filterStatus;
       
-      const fachadaMatch = filterFachada === 'Todos' || h.doc_fachada === filterFachada;
-      const predialMatch = filterPredial === 'Todos' || h.doc_predial === filterPredial;
-      const gravamenMatch = filterGravamen === 'Todos' || h.doc_gravamen === filterGravamen;
-      const medidorMatch = filterMedidor === 'Todos' || h.doc_medidor === filterMedidor;
-      const cedulaMatch = filterCedula === 'Todos' || h.doc_cedula_prop === filterCedula;
-      const formMatch = filterFormulario === 'Todos' || h.doc_formulario === filterFormulario;
+      // Filtros por columna usando valores normalizados (soluciona el problema de registros antiguos)
+      const fachadaMatch = filterFachada === 'Todos' || docFachada === filterFachada;
+      const predialMatch = filterPredial === 'Todos' || docPredial === filterPredial;
+      const gravamenMatch = filterGravamen === 'Todos' || docGravamen === filterGravamen;
+      const medidorMatch = filterMedidor === 'Todos' || docMedidor === filterMedidor;
+      const cedulaMatch = filterCedula === 'Todos' || docCedula === filterCedula;
+      const formMatch = filterFormulario === 'Todos' || docFormulario === filterFormulario;
       
       const searchMatch = h.numero.toString().includes(searchTerm);
 
@@ -466,7 +478,7 @@ const App = () => {
                     </div>
                   )}
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-3 text-slate-500">
                   <GroupLabel text="Documentos Inmueble" />
                   <CompactDocSelect label="Fachada" value={formHouse.doc_fachada} onChange={v => setFormHouse({...formHouse, doc_fachada: v})} />
                   <CompactDocSelect label="Predial" value={formHouse.doc_predial} onChange={v => setFormHouse({...formHouse, doc_predial: v})} />
@@ -550,22 +562,23 @@ const App = () => {
                         <HeaderWithFilter label="Cédula" value={filterCedula} onChange={setFilterCedula} />
                         <HeaderWithFilter label="Formulario" value={filterFormulario} onChange={setFilterFormulario} />
 
-                        <th className="py-3 px-3 text-center bg-slate-100/30 text-slate-700 font-semibold text-[9px] uppercase">Estatus Final</th>
+                        <th className="py-3 px-3 text-center bg-slate-100/30 text-slate-700 font-semibold text-[9px] uppercase tracking-wider">Estatus Final</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 text-xs font-normal text-slate-700">
                       {paginatedHouses.map(h => {
-                        const isComplete = [h.doc_fachada, h.doc_predial, h.doc_gravamen, h.doc_medidor, h.doc_cedula_prop, h.doc_formulario].every(s => s === 'OK');
+                        // Cálculo en tiempo real usando fallbacks
+                        const isComplete = [h.doc_fachada || 'Pendiente', h.doc_predial || 'Pendiente', h.doc_gravamen || 'Pendiente', h.doc_medidor || 'Pendiente', h.doc_cedula_prop || 'Pendiente', h.doc_formulario || 'Pendiente'].every(s => s === 'OK');
                         return (
                           <tr key={h.id} className="hover:bg-slate-50 transition-colors group">
                             <td className="py-2.5 px-3 whitespace-nowrap text-slate-600 font-medium">Etapa {h.etapa}</td>
                             <td className="py-2.5 px-3 font-medium text-slate-800 transition-all"><div className="flex items-center gap-2"><div className="p-1 bg-blue-50/50 rounded-md text-[#4F67EE] border border-blue-100/30 group-hover:bg-[#4F67EE] group-hover:text-white transition-all"><Home size={12} /></div><span>#{h.numero}</span></div></td>
-                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_fachada} /></td>
-                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_predial} /></td>
-                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_gravamen} /></td>
-                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_medidor} /></td>
-                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_cedula_prop} /></td>
-                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_formulario} /></td>
+                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_fachada || 'Pendiente'} /></td>
+                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_predial || 'Pendiente'} /></td>
+                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_gravamen || 'Pendiente'} /></td>
+                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_medidor || 'Pendiente'} /></td>
+                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_cedula_prop || 'Pendiente'} /></td>
+                            <td className="py-2.5 px-3 text-center"><StatusBadge status={h.doc_formulario || 'Pendiente'} /></td>
                             <td className="py-2.5 px-3 text-center bg-slate-50/30 transition-all font-medium"><StatusChipFinal status={isComplete ? 'COMPLETO' : 'PENDIENTE'} /></td>
                           </tr>
                         );
@@ -581,7 +594,7 @@ const App = () => {
               {/* TOP CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <KPICard title="Unidades en Filtro" value={stats.total} icon={<Users className="text-blue-500" size={24} />} bg="bg-white" />
-                <KPICard title="Expedientes OK (6/6)" value={stats.prediosTotalmenteListos} icon={<ClipboardCheck className="text-emerald-600" size={24} />} bg="bg-white" />
+                <KPICard title="Expedientes OK (6/6)" value={stats.prediosTotalmenteListos} icon={<ClipboardCheck className="text-emerald-500" size={24} />} bg="bg-white" />
                 
                 <div className="bg-emerald-50/80 p-5 rounded-2xl border border-emerald-200 shadow-sm flex items-center gap-5 transition-all hover:shadow-md">
                     <div className="bg-white p-3.5 rounded-xl border border-emerald-100 shadow-inner text-emerald-600 transition-all shrink-0"><CheckCircle size={20} /></div>
@@ -622,7 +635,7 @@ const App = () => {
                   <div className="relative w-40 h-40 mb-8 transition-transform group-hover:scale-105 duration-300">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle cx="50%" cy="50%" r="42%" stroke="rgba(255,255,255,1)" strokeWidth="15" fill="transparent" />
-                      <circle cx="50%" cy="50%" r="42%" stroke="#10b981" strokeWidth="15" fill="transparent" strokeDasharray="264" strokeDashoffset={264 * (1 - stats.globalAvanceIncremental / 100)} strokeLinecap="round" className="transition-all duration-1000 ease-in-out shadow-sm" />
+                      <circle cx="50%" cy="50%" r="42%" stroke="#10b981" strokeWidth="15" fill="transparent" strokeDasharray="264" strokeDashoffset={264 * (1 - stats.globalAvanceIncremental / 100)} strokeLinecap="round" className="transition-all duration-1000 shadow-sm" />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center"><span className="text-3xl font-light text-slate-800 tracking-tighter leading-none">{stats.globalAvanceIncremental}%</span><span className="text-[9px] font-semibold text-slate-600 uppercase mt-1 tracking-widest">Docs OK</span></div>
                   </div>
@@ -659,7 +672,7 @@ const CompactDocSelect = ({ label, value, onChange }) => (
     <div className="flex items-center justify-between gap-3 p-1 hover:bg-slate-50 rounded-lg transition-colors group">
         <label className="text-[10px] font-medium text-slate-700 truncate group-hover:text-slate-900 transition-colors">{label}</label>
         <div className="relative w-28">
-            <select value={value} onChange={e => onChange(e.target.value)} className={`w-full border-none p-1 pr-6 rounded-md text-[10px] font-semibold appearance-none outline-none focus:ring-1 ring-blue-500/20 cursor-pointer transition-all ${value === 'OK' ? 'bg-emerald-50 text-emerald-700 shadow-sm' : value === 'Revisión' ? 'bg-amber-50 text-amber-700 shadow-sm' : 'bg-rose-50 text-rose-700 shadow-sm'}`}>{Object.values(DOC_STATUS).map(s => <option key={s} value={s}>{s}</option>)}</select>
+            <select value={value} onChange={e => onChange(e.target.value)} className={`w-full border-none p-1 pr-6 rounded-md text-[10px] font-semibold appearance-none outline-none focus:ring-1 ring-blue-500/20 cursor-pointer transition-all ${value === 'OK' ? 'bg-emerald-50/60 text-emerald-700' : value === 'Revisión' ? 'bg-amber-50/60 text-amber-700' : 'bg-rose-50/60 text-rose-700'}`}>{Object.values(DOC_STATUS).map(s => <option key={s} value={s}>{s}</option>)}</select>
             <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-40 pointer-events-none text-slate-700" />
         </div>
     </div>
@@ -677,9 +690,9 @@ const AdminCard = ({ icon, label, status, onUpdate }) => (
 
 const StatusBadge = ({ status }) => {
   const base = "px-2.5 py-0.5 rounded-full border text-[9px] font-semibold uppercase tracking-tight flex items-center justify-center gap-1.5 w-full max-w-[90px] mx-auto shadow-sm transition-all";
-  if (status === 'OK') return <span className={`${base} bg-emerald-50 text-emerald-600 border-emerald-100/50 shadow-none`}><CheckCircle size={10} /> OK</span>;
-  if (status === 'Revisión') return <span className={`${base} bg-amber-50 text-amber-600 border-amber-100/50 shadow-none`}><Clock size={10} /> REV.</span>;
-  return <span className={`${base} bg-rose-50 text-rose-500 border-rose-100/50 shadow-none`}><AlertCircle size={10} /> PEND.</span>;
+  if (status === 'OK') return <span className={`${base} bg-emerald-50 text-emerald-700 border-emerald-100 shadow-none`}><CheckCircle size={10} /> OK</span>;
+  if (status === 'Revisión') return <span className={`${base} bg-amber-50 text-amber-600 border-amber-100 shadow-none`}><Clock size={10} /> REV.</span>;
+  return <span className={`${base} bg-rose-50 text-rose-700 border-rose-100 shadow-none`}><AlertCircle size={10} /> PEND.</span>;
 };
 
 const SortableHeader = ({ label, sortKey, sortConfig, onClick }) => {
